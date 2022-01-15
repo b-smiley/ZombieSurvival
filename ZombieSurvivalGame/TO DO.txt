@@ -1,5 +1,2 @@
 TO DO
-start screen images
-music
-fix restart game time error
-diagonal player images
+code effiency

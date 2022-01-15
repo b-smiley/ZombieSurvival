@@ -1,11 +1,9 @@
 # Zombie Survival Game
-# Game created by - B.S - 12/27/2021
+# Game created by - Bsizzzle - Dec\2021
 # Survive the hoard of zombies for as long as possible!
 
 # Imports
-from cgitb import small
-from turtle import title
-import pygame,sys,random,time
+import pygame,sys,random
 from math import atan2,degrees,pi
 from pygame.locals import *
 
@@ -17,30 +15,32 @@ fps = 60
 framesPerSec = pygame.time.Clock()
 
 # Colors 
-red = (255,0,0)
-green = (0,255,0)
-blue = (0,0,255)
 black = (0,0,0)
 white = (255,255,255)
 grey = (189, 184, 183)
 
-# Zombie and Human Images
-zNorth = "Photos\zNorth.png"
-zSouth = "Photos\zSouth.png"
-zEast = "Photos\zEast.png"
-zWest = "Photos\zWest.png"
+# Zombie Images
+zN = "Photos\zN.png"
+zS = "Photos\zS.png"
+zE = "Photos\zE.png"
+zW = "Photos\zW.png"
 zpp = "Photos\\posxposy.png"
 zpn = "Photos\posxnegy.png"
 znp = "Photos\\negxposy.png"
 znn = "Photos\\negxnegy.png"
+# Player Images
 pN = "Photos\\NorthPlayer.png"
 pE = "Photos\EastPlayer.png"
 pS = "Photos\SouthPlayer.png"
 pW = "Photos\WestPlayer.png"
-
-zombie_start_image = pygame.image.load(zNorth) # Starting Image
+# Bullet Images
+bN = "Photos\\BulletN.png"
+bS = "Photos\\BulletS.png"
+bE = "Photos\\BulletE.png"
+bW = "Photos\\BulletW.png"
+# Additional Images
+zombie_start_image = pygame.image.load(zN) # Starting Image
 player_start_image = pygame.image.load(pN) # Starting Image
-bullet_image = pygame.image.load("Photos\\Bullet.png")
 background = pygame.image.load("Photos\\Background.png")
 game_over_bg = pygame.image.load("Photos\GameOver.png")
 rule1_img = pygame.image.load("Photos\\rule1.png")
@@ -53,15 +53,14 @@ medium_font = pygame.font.SysFont("Times New Roman",60)
 large_font = pygame.font.SysFont("Times New Roman",100)
 
 # Screen Setup
-desktops=pygame.display.get_desktop_sizes()
-primary_desktop = desktops[0]
-screenwidth = primary_desktop[0]
-screenheight = primary_desktop[1] - 50 # -50 Pixels just to show the tab on the screen, Without this it is fullscreen
-sc_x = screenwidth/2
+monitors=pygame.display.get_desktop_sizes() # This will grab monitor's dimensions
+primary_monitor = monitors[0]
+screenwidth = primary_monitor[0]
+screenheight = primary_monitor[1] - 50 # -50 Pixels just to show the tab on the screen, Without this it is fullscreen
+sc_x = screenwidth/2 
 sc_y = screenheight/2
-sc = (sc_x,sc_y)
+sc = (sc_x,sc_y) # Screen Center (sc)
 screen = pygame.display.set_mode((screenwidth,screenheight)) 
-screen.fill(white)
 pygame.display.set_caption("Zombie Survival")
 
 # Additional Variables
@@ -75,8 +74,8 @@ zombie_spawn = {
 "w":(0,random.randint(0,screenheight)),
 }
 
-# Chracter Classes
 
+# Chracter Classes
 class Zombie(pygame.sprite.Sprite):
     def __init__(self,position):
         super().__init__()
@@ -111,26 +110,27 @@ class Zombie(pygame.sprite.Sprite):
         
         # Broke up the unit circle to make the zombie pngs change
         if degs in range(0,15):
-            self.image = pygame.image.load(zWest)
+            self.image = pygame.image.load(zW)
         if degs in range(16,75):
             self.image = pygame.image.load(zpp)
         if degs in range(76,105):
-            self.image = pygame.image.load(zSouth)
+            self.image = pygame.image.load(zS)
         if degs in range(106,165):
             self.image = pygame.image.load(znp)
         if degs in range(166,195):
-            self.image = pygame.image.load(zEast)
+            self.image = pygame.image.load(zE)
         if degs in range(196,255):
             self.image = pygame.image.load(znn)
         if degs in range(256,285):
-            self.image = pygame.image.load(zNorth)
+            self.image = pygame.image.load(zN)
         if degs in range(286,345):
             self.image = pygame.image.load(zpn)
         if degs in range(346,360):
-            self.image = pygame.image.load(zWest)
+            self.image = pygame.image.load(zW)
         
     def update(self,human):
         self.move(human)
+
 
 class Human(pygame.sprite.Sprite):
     def __init__(self,position):
@@ -139,12 +139,12 @@ class Human(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=position)
         self.position = pygame.math.Vector2(position)
         self.velocity = pygame.math.Vector2(sc) # Should start the player at the center of the game
-        self.speed = 4
-        self.direction = "n" # player_start_image starts  with pN
+        self.speed = 5
+        self.direction = "n" # player_start_image starts with pN
 
     def move(self):
         pressed_keys = pygame.key.get_pressed()
-        # Using the typical "aswd" movement combination
+        # Using the typical "wasd" movement combination
         if self.rect.top > 0:
             if pressed_keys[K_w]: # North
                 self.rect.move_ip(0,-self.speed)
@@ -169,21 +169,17 @@ class Human(pygame.sprite.Sprite):
     def shoot(self):
         global ammo
         if ammo > 0:
-            print("shoot bullet")
             ammo -= 1
             b = Bullet((self.rect[0],self.rect[1]),self.direction) # Create a new bullet heading in the current direction
             b.move()
             return True, b
 
         if ammo == 0:
-            #display_reload = True
-            #return display_reload
-            return False, "this is to make it a tuple"
+            return False, "outofammo"
             
     def reload(self):
         global ammo
         ammo = 10
-        print("Reload Sucessful")
     
     def reset(self,position):
         self.rect = self.image.get_rect(center=position)
@@ -195,27 +191,31 @@ class Human(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,human_position,human_direction):
         super().__init__()
-        self.image = bullet_image
+        self.image = pygame.image.load(bN) # Starting image
         #self.direction tells the move method which if statement to run
         self.direction = human_direction
         # This is to offset the bullets so they appear from the gun art
         if self.direction == "n":
             self.position_x = human_position[0] + 70 
-            self.position_y = human_position[1]          
+            self.position_y = human_position[1]
+            self.image =pygame.image.load(bN)          
         if self.direction == "s":      
             self.position_x = human_position[0] + 130 
-            self.position_y = human_position[1] + 200       
+            self.position_y = human_position[1] + 200
+            self.image =pygame.image.load(bS)          
         if self.direction == "e":
             self.position_x = human_position[0] + 200
-            self.position_y = human_position[1] + 70   
+            self.position_y = human_position[1] + 70
+            self.image =pygame.image.load(bE)          
         if self.direction == "w":         
             self.position_x = human_position[0]
             self.position_y = human_position[1] + 130
+            self.image =pygame.image.load(bW)          
         self.rect = self.image.get_rect(center = (self.position_x,self.position_y)) 
         #self.rect will be set to where the position the human shot the bullet from
 
     def move(self):
-        speed = 15
+        speed = 20
         if self.direction == "n":
             self.rect.move_ip(0,-speed)         
         if self.direction == "s":      
@@ -228,6 +228,23 @@ class Bullet(pygame.sprite.Sprite):
     def update(self):
         self.move()         
 
+class Music():
+    def __init__(self,select):
+        self.select = select
+    def play(self):
+        if self.select == "gameon":  
+            pygame.mixer.music.load("Sounds\\beats.wav")
+            pygame.mixer.music.play(-1)
+        if self.select == "gameover":
+            pygame.mixer.music.load("Sounds\gameovermusic.wav")
+            pygame.mixer.music.play(1)
+        if self.select == "boom":
+            boom = pygame.mixer.Sound("Sounds\\boom.wav")
+            boom.play()
+    def stop_music(self):
+        pygame.mixer.music.unload()
+        pygame.mixer.music.stop()
+    
 # Creating Sprite Groups
 all_sprites = pygame.sprite.LayeredUpdates()
 zombies = pygame.sprite.Group()
@@ -235,6 +252,8 @@ bullets = pygame.sprite.Group()
 
 # Setting up Sprites
 h1 = Human(position=(sc))
+m1 = Music("gameon")
+m2 = Music("boom")
 # Events
 increase_spawn = pygame.USEREVENT + 1
 pygame.time.set_timer(increase_spawn,4000)
@@ -251,9 +270,14 @@ def spawn_zombie():
 def format_time(secs):
     sec = secs%60
     minute = secs//60
-    suv_time = "Survival Time - " + str(minute) + ":" + str(sec)
+    suv_time = f"Survival Time - {minute}:{sec}"
     return suv_time  
-  
+
+def music_changer(change_music,select_music):
+    if change_music:
+        m1.stop_music()
+        m1.select = select_music
+        m1.play()
 
 # Game Loop
 def main():
@@ -262,10 +286,17 @@ def main():
     start_screen = True
     game_on = False
     game_over = False
-    t0 = time.time() # Execution Time
+    t0 = None
+    bullet = None
+    m1.play()
+    select_music = "gameon"
+    change_music = False
     while run:
+        
         if game_on:
-            play_time = (time.time() - t0) # Current Time - Execution Time
+            music_changer(change_music,select_music)
+            change_music = False
+            play_time = (pygame.time.get_ticks() - t0)/1000
             # Cycles through all events occuring
             for event in pygame.event.get():
                 if event.type == QUIT: # If the user presses the exit button
@@ -280,14 +311,12 @@ def main():
                     
                     if has_ammo:
                         bullets.add(bullet)
-                    #if not has_ammo:
-                        #displayreload = medium_font.render("Reload Ammo!",False,white)
-                        #screen.blit(displayreload,(150,150))
+                        m2.play()
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == K_r: # If the user reloads
                         h1.reload()
-                        screen.fill(black)
+                        bullet = None
                 if event.type == increase_spawn:
                     spawn_amount += 1                    
                     for _ in range(spawn_amount):
@@ -302,6 +331,10 @@ def main():
             screen.blit(displaytime,(10,10))
             screen.blit(displayammo,(10,50))
             screen.blit(displayscore,(10,100))
+            if bullet == "outofammo":
+                displayreload = large_font.render("Reload!",True,white)
+                reloadrect = displayreload.get_rect(center=(sc))
+                screen.blit(displayreload,reloadrect)
             
             # Displaying Sprites
             h1.update()
@@ -318,13 +351,15 @@ def main():
 
             # If Zombies get to the Human
             if pygame.sprite.spritecollideany(h1,zombies):
-                # Game over music 
+                select_music = "gameover"
+                change_music = True
+                music_changer(change_music,select_music)
                 game_over = True 
                 game_on = False 
             
         if game_over:
+            change_music = False
         # Display Background and Text
-            screen.fill(red) # As a backup if background image does not load
             screen.blit(game_over_bg,(0,0))
             display_game_over = large_font.render("Game Over!",True,grey)
             dis_go_rect = display_game_over.get_rect(center=(sc_x,sc_y-200))
@@ -358,6 +393,12 @@ def main():
                         t0 = play_time
                         score = 0
                         ammo = 10
+                        t0 = pygame.time.get_ticks()
+                        spawn_amount = 1
+                        bullet = None
+                        select_music = "gameon"
+                        change_music = True
+                        music_changer(change_music,select_music)
                         game_over = False
                         game_on = True
 
@@ -403,6 +444,7 @@ def main():
                         pygame.quit()
                         sys.exit()
                     if event.key == K_SPACE:
+                        t0 = pygame.time.get_ticks()
                         game_on = True
                         start_screen = False
             
