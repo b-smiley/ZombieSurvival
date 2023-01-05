@@ -8,5 +8,8 @@ Additonally, I should've added memory removal on each zombie when they die but I
 
 Here is a short clip of some of the game play.
 
-https://user-images.githubusercontent.com/66867383/210884535-2e868f1b-d2db-40c3-a2d2-1a7fcbcee687.mp4
+
+
+
+https://user-images.githubusercontent.com/66867383/210886619-b726755a-6153-4abd-b80c-4d515a9237d6.mp4
 
