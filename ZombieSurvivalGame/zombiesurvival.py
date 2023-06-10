@@ -1,6 +1,7 @@
 # Zombie Survival Game
-# Game created by - Bsizzzle - Dec\2021
+# Game created by - Brendan Smiley - Dec\2021
 # Survive the hoard of zombies for as long as possible!
+# License: MIT 
 
 # Imports
 import pygame,sys,random
